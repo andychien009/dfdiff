@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 
+import sys
+
 class dfdiff():
     def __init__(self, l, r, key):
         self.key = key
@@ -13,13 +15,45 @@ class dfdiff():
         self.scol = [x for x in self.lcol if x in self.rcol and x not in self.key ]
         self.l[self.l.columns] = self._procCols(self.l)
         self.r[self.r.columns] = self._procCols(self.r)
-        self.m = self.l.merge(self.r, how='outer', on=self.key, 
-                         suffixes=('_l','_r'), indicator=True)
-        self.diffdf = None
 
-        # do pkey uniqueness test
-        if self.m.shape[0] != self.l.shape[0] or self.m.shape[0] != self.r.shape[0]:
-            print("*** duplicated records are created because join key is not unique")
+        # validate the key is in list of shared columns
+        err = []
+        for k in self.key:
+            if k not in self.lcol or k not in self.rcol:
+                err.append(k)
+        if err:
+            print(f"*** columns {err} are not part of the shared columns\n"+
+                  f"    between the left and right dataset shared columns\n"+
+                  f"{self.scol}", file=sys.stderr)
+            sys.exit(1)
+
+        # validate the uniqueness of the primary key to be
+        # used for testing, display warning if the key is not unique
+        # in either the left or right table, implies not a true
+        # 1:1 join
+        self._testUniqueness(self.l, "left")
+        self._testUniqueness(self.r, "right")
+
+        self.m = self.l.merge(self.r, how='outer', on=self.key, 
+                         suffixes=('_l','_r'), indicator=True
+                )
+        self.celldiffdf = None
+        self.recdiffdf = None
+        self.celldiffdf = self.getCellDiffDf()
+        self.recdiffdf = self.getRecDiffDf()
+
+    def _testUniqueness(self, data, side):
+        s = data.groupby(self.key).size()
+        s = s[s>1]
+        if s.size > 0:
+            with pd.option_context('display.max_rows', None, 'display.max_columns', None,
+                           'display.max_seq_items', None):
+                print(f"*** Primary Key {self.key} is not unique at the {side}\n"+
+                      f"    dataset. The differences for the records with the\n" +
+                      f"    following primary key may not be accurate\n{s}", file=sys.stderr)
+
+    def getDiffDfs(self):
+        return self.celldiffdf, self.recdiffdf
 
     def _procCols(self, df):
         ret = df.copy()
@@ -28,8 +62,6 @@ class dfdiff():
         return ret
 
     def printDiff(self):
-        if self.diffdf is None:
-            self._getDiffDf()
         for c in self.scol:
             coldiff = self.diffdf[self.diffdf['fname']==c]
             if coldiff.shape[0] != 0:
@@ -37,44 +69,51 @@ class dfdiff():
                 print(f"{coldiff}\n")
 
     def getFieldDiffList(self):
-        if self.diffdf is None:
-            self._getDiffDf()
-        return self.diffdf['fname'].unique().tolist()
+        return self.celldiffdf['fname'].unique().tolist()
 
-    def getDiffDf(self):
-        if self.diffdf is None:
-            self._getDiffDf()
-            return self.diffdf
+    def getRecDiffDf(self):
+        if self.recdiffdf is None:
+            left = self.m[self.m['_merge']=='left_only'][self.key].copy()
+            left['exists'] = "L"
+            right = self.m[self.m['_merge']=='right_only'][self.key].copy()
+            right['exists'] = "R"
+            recdiffdf = pd.concat([left,right])
+            return recdiffdf
         else:
-            return self.diffdf
+            return self.recdiffdf
 
-    def _getDiffDf(self):
-        diffdf = None
-        for c in self.scol:
-            cols = [f"{c}_l", f"{c}_r"]
-            diffdata = ['fname','lval','rval']
-            coldiffdf = self.m[self.m[cols[0]] != self.m[cols[1]]]
-            if coldiffdf.shape[0] != 0:
-                mapper = dict(zip(cols,['lval','rval']))
-                coldiffdf = coldiffdf.rename(columns=mapper)
-                coldiffdf['fname'] = c
-                coldiff = coldiffdf[self.key+diffdata].copy()
-                if diffdf is None:
-                    diffdf = coldiff
-                else:
-                    diffdf = pd.concat([diffdf, coldiff])
+    def getCellDiffDf(self):
+        if self.celldiffdf is None:
+            celldiffdf = None
+            for c in self.scol:
+                cols = [f"{c}_l", f"{c}_r"]
+                diffdata = ['fname','lval','rval']
+                datadiffdf = self.m[(self.m[cols[0]] != self.m[cols[1]]) &
+                                    (self.m['_merge']=="both")]
+                if datadiffdf.shape[0] != 0:
+                    mapper = dict(zip(cols,['lval','rval']))
+                    datadiffdf = datadiffdf.rename(columns=mapper)
+                    datadiffdf['fname'] = c
+                    datadiff = datadiffdf[self.key+diffdata].copy()
+                    if celldiffdf is None:
+                        celldiffdf = datadiff
+                    else:
+                        celldiffdf = pd.concat([celldiffdf, datadiff],
+                                ignore_index=True)
 
-        if diffdf is None:
-            self.diffdf = pd.DataFrame(
-                    columns=[self.key+diffdata],
-                    dtype=str)
+            # if there is absolutely no data difference found,
+            # create an empty dataframe
+            if celldiffdf is None:
+                celldiffdf = pd.DataFrame(
+                        columns=[self.key+diffdata],
+                        dtype=str)
+            return celldiffdf
         else:
-            self.diffdf = diffdf.reset_index()
+            return self.celldiffdf
 
     def __repr__(self):
         return f"""\
 Field in l not r: {self.inlnotr}
 Field in r not l: {self.inrnotl}
-Field shared between dataframe: {self.scol}
-Number of field with differences is observed: {self.getFieldDiffList()}
+Field where differences are observed: {self.getFieldDiffList()}
 """
