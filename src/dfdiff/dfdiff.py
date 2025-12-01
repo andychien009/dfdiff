@@ -105,7 +105,7 @@ class dfdiff():
             # create an empty dataframe
             if celldiffdf is None:
                 celldiffdf = pd.DataFrame(
-                        columns=[self.key+diffdata],
+                        columns=self.key+diffdata,
                         dtype=str)
             return celldiffdf
         else:
