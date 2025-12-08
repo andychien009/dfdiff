@@ -3,23 +3,42 @@ import numpy as np
 
 import sys
 
+def pdprint(pdobj):
+    with pd.option_context('display.max_rows', None, 'display.max_columns', 
+            None, 'display.max_seq_items', None):
+        print(pdobj)
+
+
 class dfdiff():
     def __init__(self, l, r, key):
         self.key = key
         self.l = l
         self.r = r
-        self.lcol = l.columns.to_list()
-        self.rcol = r.columns.to_list()
-        self.inlnotr = [x for x in self.lcol if x not in self.rcol ]
-        self.inrnotl = [x for x in self.rcol if x not in self.lcol ]
-        self.scol = [x for x in self.lcol if x in self.rcol and x not in self.key ]
+
+        # gather metadata information about the columns/fields
+        # from both files
+        self.lcol = self._getColDf(self.l, "l")
+        self.rcol = self._getColDf(self.r, "r")
+        
+        self.fdiff = self.lcol.merge(self.rcol, how='outer', left_on=['l_fname'],
+                right_on=['r_fname'], indicator=True)
+        self.inlnotr = self.fdiff[self.fdiff['_merge']=="left_only"]['l_fname'].tolist()
+        self.inrnotl = self.fdiff[self.fdiff['_merge']=="right_only"]['r_fname'].tolist()
+        self.scol = self.fdiff[self.fdiff['_merge']=="both"]['l_fname'].tolist()
+        self.fdiff = self.fdiff[['l_ordinalposition', 'l_fname','r_fname','r_ordinalposition','_merge']].sort_values(by='r_ordinalposition')
+
+        # strip and apply standardized changes to all fields
+        # from both files
         self.l[self.l.columns] = self._procCols(self.l)
         self.r[self.r.columns] = self._procCols(self.r)
 
+
         # validate the key is in list of shared columns
         err = []
+        lcolls = self.lcol['l_fname'].to_list()
+        rcolls = self.rcol['r_fname'].to_list()
         for k in self.key:
-            if k not in self.lcol or k not in self.rcol:
+            if k not in lcolls or k not in rcolls:
                 err.append(k)
         if err:
             print(f"*** columns {err} are not part of the shared columns\n"+
@@ -31,8 +50,9 @@ class dfdiff():
         # used for testing, display warning if the key is not unique
         # in either the left or right table, implies not a true
         # 1:1 join
-        self._testUniqueness(self.l, "left")
-        self._testUniqueness(self.r, "right")
+
+        self.dupkey = self._testUniqueness(self.l, "L")
+        self.dupkey = pd.concat([self.dupkey, self._testUniqueness(self.r, "R")])
 
         self.m = self.l.merge(self.r, how='outer', on=self.key, 
                          suffixes=('_l','_r'), indicator=True
@@ -42,18 +62,29 @@ class dfdiff():
         self.celldiffdf = self.getCellDiffDf()
         self.recdiffdf = self.getRecDiffDf()
 
+    def _getColDf(self, df, side):
+        ret = pd.DataFrame(df.columns.to_list(), columns=[f"{side}_fname"])
+        ret = ret.reset_index()
+        ret = ret.rename({'index':f"{side}_ordinalposition"}, axis=1)
+        ret[f"{side}_ordinalposition"] = pd.to_numeric(ret[f"{side}_ordinalposition"], downcast="integer")
+        return ret
+
     def _testUniqueness(self, data, side):
         s = data.groupby(self.key).size()
         s = s[s>1]
         if s.size > 0:
-            with pd.option_context('display.max_rows', None, 'display.max_columns', None,
-                           'display.max_seq_items', None):
-                print(f"*** Primary Key {self.key} is not unique at the {side}\n"+
-                      f"    dataset. The differences for the records with the\n" +
-                      f"    following primary key may not be accurate\n{s}", file=sys.stderr)
+            ret = pd.DataFrame(data=s, index=s.index, dtype=str,
+                columns=['count']).reset_index()
+            ret['exists'] = side
+            return ret
+        else:
+            # if no duplicate create empty dataframe for this
+            ret = pd.DataFrame(data=[], dtype=str, 
+                columns=self.key+['count','exists'])
+            return ret
 
     def getDiffDfs(self):
-        return self.celldiffdf, self.recdiffdf
+        return self.fdiff, self.celldiffdf, self.recdiffdf, self.dupkey
 
     def _procCols(self, df):
         ret = df.copy()
@@ -86,6 +117,13 @@ class dfdiff():
         if self.celldiffdf is None:
             celldiffdf = None
             for c in self.scol:
+                # if column is part of the primary key it need to be
+                # skipped
+                if c in self.key:
+                    continue
+
+                # if column is not part of the primary key, continue
+                # to analyze column difference
                 cols = [f"{c}_l", f"{c}_r"]
                 diffdata = ['fname','lval','rval']
                 datadiffdf = self.m[(self.m[cols[0]] != self.m[cols[1]]) &
