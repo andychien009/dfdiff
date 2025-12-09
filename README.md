@@ -13,12 +13,37 @@ There are two primary methods of utilizing dfdiff geared toward different needs
 * **Standalone executable (Windows 11)**: Designed for people who just want to get going with their analysis and cannot be bothered with seting up development and dealing with programming
 * **Pandas library**: Designed for developers who would like finer control to the comparison process
 
+# TL;DR Just Get Me Started Standalone Executable (Windows 11)
+1. Downlaod [this file](https://github.com/andychien009/dfdiff/raw/refs/heads/main/release/win11/dfdiff.exe).
+2. Place in directory
+3. Open PowerShell and use the following command (if you are inputting everything in one line you can ignore the backtick "``" they are there for visual aesthetics
+~~~
+cd "<yourDirectory>"
+
+.\dfdiff.exe --files <yourLeft.csv> <yourRight.csv> `
+    --key "<yourKey1>" "<yourKey2>" `
+    --outxlsx
+~~~
+4. Open result and see
+
+# Table of Content
+1. [Overview](#overview)
+2. [Standalone Executable (Windows 11)](#standalone-executable-windows-11)
+3. [Using dfdiff Library(#using-dfdiff-library)
+4. [Interpreting the Outputs](#interpreting-the-outputs)
+  1. [Column/Field Differences (fdiff)]()
+  2. [Cell/Data Differences (cdiff)]()
+  3. [Row/Record Level Differences (recdiff)]()
+  4. [Duplicated Join Key (dupkey)]()
+5. [About Me](#about-me)
+6. [Dedication](#dedication)
+
 # Standalone Executable (Windows 11)
 There is no dependency or pre-requisit when it comes to using the standalone executable.
 
 Please note, the currently available executable is built specifically for Windows 11 environment, should you need executable in other operating system if this build does not work for you, you will need to build your own executable or use the library version.
 
-To use dfdiff standalone simply download the executable at [link]().
+To use dfdiff standalone simply download the executable at [link](https://github.com/andychien009/dfdiff/raw/refs/heads/main/release/win11/dfdiff.exe).
 
 Place dfdiff in any folder and navigate to it
 
@@ -71,8 +96,66 @@ The program will do the following, read the two files in as table of string only
 
 Depending on the output option selected it will either output as a CSV or Excel file. If output option is specified, the program will simply output a summary of variances on the console. If the program completes with no ouput in the console it means that no differences between the two files are observed.
 
-The program outputs 4 different types of tables explained below
+The program outputs 4 different types of tables. See [Interpreting the Outputs](#interpreting-the-outputs) for more information.
 
+# Using dfdiff Library
+The benefit of using the dfdiff library is that the programmer will be able to assert more control around (entering and exiting) the comparison process. Following are some use cases that may warrant looking into using the dfdiff library instead of the standalone executable
+* To load the data using conditions that are not covered by the standalone executable options. Even though all variables are loaded as string for the comparison, some more adventurous programmer may choose to have Pandas automatically detect data types (even though that is more likely yield unexpected result) or manually specified data format.
+* If the join key need to be processed prior to the join. For example zero padding the join key, a situation commonly happens after opening the CSV in Excel causing discrepancy to the source data.
+* To pre-eliminate or remove false positive difference results. For example in the case of "1.0" vs "1" either the data could be adjusted so that the display format for the fields are equivalent before the comparison step or the data could be filtered out from the comparison step.
+* If other output formats other than the out-of-the-box **--outxlsx** and **--outcsv** formats are desired.
+
+The dfdiff Python library is readily available in Pypi and can be installed through the usual pip installation process.
+
+You will need to install the library and its necessary dependencies
+
+```
+pip install pandas numpy openpyxl dfdiff
+```
+
+An example skeleton program with information about the invocation and the use is as follow.
+
+```
+import pandas as pd
+
+from dfdiff.dfdiff import dfdiff
+
+F1="left.csv"
+F2="right.csv"
+
+with open(F1, 'r', encoding='latin_1') as F:
+    left = pd.read_csv(F)
+
+with open(F2, 'r', encoding='latin_1') as F:
+    right = pd.read_csv(F)
+   
+# suppose we want to pad 0 in the id before we start comparison
+left['id'] = left['id'].str.pad("0", side="left", fillchar="0")
+
+cmp = dfdiff(left, right, uargs.pkey)
+fdiff, cdiff, recdiff, dupkey = cmp.getDiffDfs()
+
+# .... rest of the program
+```
+
+dfdiff library outputs 4 different types of tables in Pandas.DataFrame format ready for further processing in the exact sequence after invoking the `dfdiff.getDiffDfs()`. 
+
+1. fdiff
+2. cdiff
+3. recdiff
+4. dupkey
+
+If you have no use for a specific diff dataframe use Python's single underscore `_` to ignore the value.
+
+```
+# the following will register only the cell diff and rec diff
+# dataframe
+_, cdiff, recdiff, _ = cmp.getDiffDfs()
+```
+
+See [Interpreting the Outputs](#interpreting-the-outputs) for more information.
+
+# Interpreting the Outputs
 ## Column/Field Differences (fdiff)
 The program outputs a table that highlight the field differences between the left and the right file. It will have the following columns.
 
@@ -127,28 +210,13 @@ Due to the nature of the join, there will no reliable method to programmatically
 | count                     | The count of the number of duplication the supplied join key took place in the dataset                   |
 | exits                     | Contains the value 'L' or 'R' depending on where the record identified by the join key currently exists. |
 
-# Using the Library
-The benefit of using the dfdiff library is that the programmer will be able to assert more control around (entering and exiting) the comparison process. Following are some use cases that may warrant looking into using the dfdiff library instead of the standalone executable
-* To load the data using conditions that are not covered by the standalone executable options. Even though all variables are loaded as string for the comparison, some more adventurous programmer may choose to have Pandas automatically detect data types (even though that is more likely yield unexpected result) or manually specified data format.
-* If the join key need to be processed prior to the join. For example zero padding the join key, a situation commonly happens after opening the CSV in Excel causing discrepancy to the source data.
-* To pre-eliminate or remove false positive difference results. For example in the case of "1.0" vs "1" either the data could be adjusted so that the display format for the fields are equivalent before the comparison step or the data could be filtered out from the comparison step.
-* If other output formats other than the out-of-the-box **--outxlsx** and **--outcsv** formats are desired.
-
-The dfdiff Python library is readily available in Pypi and can be installed through the usual pip installation process.
-
-You will need to install the library and its necessary dependencies
-
-```
-pip install pandas numpy openpyxl dfdiff
-```
-
 
 # About Me
-My name is Hsiang-An (Andy) Chien. Currently, full-time data scientist slash ETL engineer (the title changes so fast these days), part-time general computing and gaming enthusiast.
+My name is Hsiang-An (Andy) Chien. Currently, full-time ETL Engineer and Business Intelligence Solution Developer (the title changes so fast these days), part-time general computing and gaming enthusiast.
 
 Would love to see my work being used in more ways than one to tackle common challenges others may have encountered along their way. Share this program and library with others who may need it.
 
 If you have success story to tell, it would make my day! Message me at andy_chien (at) hotmail.com.
 
 # Dedication
-I dedicate this work and hopefully a piece of me to the world for my loving family: Jina Chiang, Julia, and Alison Chien. I hope that a piece of me will be around and kicking on the interweb watching over you through time.
+I dedicate this work, a piece of me, for the world from my loving family: Jina Chiang, Julia, and Alison Chien. I hope that a piece of me will be around and kicking on the interweb watching over you through time.

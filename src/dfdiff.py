@@ -39,7 +39,6 @@ left = loadfile(0)
 right = loadfile(1)
 
 cmp = dfdiff(left, right, uargs.pkey)
-# print(f"{cmp}")
 fdiff, cdiff, recdiff, dupkey = cmp.getDiffDfs()
 
 fp = Path(uargs.files[1])
