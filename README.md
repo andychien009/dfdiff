@@ -1,7 +1,7 @@
 # Overview
 dfdiff is a Python Pyinstaller standalone executable with an accompanying Pythonlibrary that assist users with the task of gathering information about the differences between two CSV files using the Python Pandas library.
 
-dfdiff takes two data files and a join key as primary input then identifies table variances between two files, such as
+dfdiff takes two data files and a join key as input then identifies table variances between two files. The list of identified variances are as follow:
 1. Field/column differences
 2. Cell/data differences
 3. Row/record differences
@@ -28,15 +28,16 @@ cd "<yourDirectory>"
 
 # Table of Content
 1. [Overview](#overview)
-2. [Standalone Executable (Windows 11)](#standalone-executable-windows-11)
-3. [Using dfdiff Library(#using-dfdiff-library)
-4. [Interpreting the Outputs](#interpreting-the-outputs)
-  1. [Column/Field Differences (fdiff)]()
-  2. [Cell/Data Differences (cdiff)]()
-  3. [Row/Record Level Differences (recdiff)]()
-  4. [Duplicated Join Key (dupkey)]()
-5. [About Me](#about-me)
-6. [Dedication](#dedication)
+2. [TL;DR Just Get Me Started Standalone Executable (Windows 11)](#tldr-just-get-me-started-standalone-executable-windows-11)
+3. [Standalone Executable (Windows 11)](#standalone-executable-windows-11)
+4. [Using dfdiff Library](#using-dfdiff-library)
+5. [Interpreting the Outputs](#interpreting-the-outputs)
+   1. [Column/Field Differences (fdiff)](#columnfield-differences-fdiff)
+   2. [Cell/Data Differences (cdiff)](#celldata-differences-cdiff)
+   3. [Row/Record Level Differences (recdiff)](#rowrecord-level-differences-recdiff)
+   4. [Duplicated Join Key (dupkey)](#duplicated-join-key-dupkey)
+6. [About Me](#about-me)
+7. [Dedication](#dedication)
 
 # Standalone Executable (Windows 11)
 There is no dependency or pre-requisit when it comes to using the standalone executable.

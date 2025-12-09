@@ -12,7 +12,7 @@ from dfdiff.dfdiff import dfdiff
 
 VER=0.8
 
-parser = argparse.ArgumentParser(prog="dfdiff", description=f"This program load two CSV files as string into Python Pandas DataFrame to identify the differences. Version {VER}. Written by Andy Chien andy_chien@hotmail.com -JAJA")
+parser = argparse.ArgumentParser(prog="dfdiff", description=f"This program load two CSV files as string into Python Pandas DataFrame to identify the differences. Version {VER}. This program is released under GPLv3 License. Written by Andy Chien andy_chien@hotmail.com -JAJA")
 parser.add_argument('--files', metavar="FILE", nargs=2, required=True, help="The path to the left and right csv file")
 parser.add_argument('--key', nargs='+', required=True, help="The list of join key to be used for joining the left and right table/csv. Composite key is supported, separated by space and enclosed by double quote if necessary.")
 parser.add_argument('--outcsv', action='store_true', help="The output of the diff file using CSV file. This output method maybe preferred if the XLSX output experiences performance issues due to the size of the output data.", default=False)
