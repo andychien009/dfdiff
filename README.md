@@ -114,9 +114,11 @@ You will need to install the library and its necessary dependencies
 pip install pandas numpy openpyxl dfdiff
 ```
 
-An example skeleton program with information about the invocation and the use is as follow.
+An example skeleton program with information about the invocation and the use is as follow. The file can be located [here](https://github.com/andychien009/dfdiff/blob/main/release/lib-example.py)
 
 ```
+#!/usr/bin/python3
+
 import pandas as pd
 
 from dfdiff.dfdiff import dfdiff
@@ -125,19 +127,24 @@ F1="left.csv"
 F2="right.csv"
 
 with open(F1, 'r', encoding='latin_1') as F:
-    left = pd.read_csv(F)
+    left = pd.read_csv(F, dtype=str, low_memory=False)
 
 with open(F2, 'r', encoding='latin_1') as F:
-    right = pd.read_csv(F)
-   
+    right = pd.read_csv(F, dtype=str, low_memory=False)
+
 # suppose we want to pad 0 in the id before we start comparison
 left['id'] = left['id'].str.pad("0", side="left", fillchar="0")
 
-cmp = dfdiff(left, right, uargs.pkey)
+cmp = dfdiff(left, right, ['id','compkey'])
 fdiff, cdiff, recdiff, dupkey = cmp.getDiffDfs()
 
-# .... rest of the program
+print(fdiff.head())
+print(cdiff.head())
+print(recdiff.head())
+print(dupkey.head())
 ```
+
+Take a note at the use of the `low_memory=False` when using Pandas.read_csv. If you plan to open big file you may want to include the flag so that you do not encounter memory usage error from Pandas. When using this mode expect approximately 4 times the size of two files being taken in RAM.
 
 dfdiff library outputs 4 different types of tables in Pandas.DataFrame format ready for further processing in the exact sequence after invoking the `dfdiff.getDiffDfs()`. 
 
