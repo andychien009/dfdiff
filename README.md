@@ -1,5 +1,5 @@
 # Overview
-dfdiff is a Python Pyinstaller standalone executable with an accompanying Pythonlibrary that assist users with the task of gathering information about the differences between two CSV files using the Python Pandas library.
+dfdiff is a Python Pyinstaller standalone executable with an accompanying Python library that assist users with the task of gathering information about the differences between two CSV files using the Python Pandas library.
 
 dfdiff takes two data files and a join key as input then identifies table variances between two files. The list of identified variances are as follow:
 1. Field/column differences
