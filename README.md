@@ -11,12 +11,12 @@ dfdiff provides the above output using Pandas DataFrame that can be further anla
 
 There are two primary methods of utilizing dfdiff geared toward different needs
 * **Standalone executable (Windows 11)**: Designed for people who just want to get going with their analysis and cannot be bothered with seting up development and dealing with programming
-* **Pandas library**: Designed for developers who would like finer control to the comparison process
+* **Pandas library**: Designed for developers who would like finer control of the comparison process
 
 # TL;DR Just Get Me Started Standalone Executable (Windows 11)
 1. Downlaod [this file](https://github.com/andychien009/dfdiff/raw/refs/heads/main/release/win11/dfdiff.exe).
 2. Place in directory
-3. Open PowerShell and use the following command (if you are inputting everything in one line you can ignore the backtick "``" they are there for visual aesthetics
+3. Open PowerShell and use the following command (if you are inputting everything in one line you can ignore the backtick "`" they are there for visual aesthetics
 ~~~
 cd "<yourDirectory>"
 
@@ -57,17 +57,17 @@ cd c:\user\me\Documents\
 .\dfiff.exe --help
 
 # you should be greeted with the following
-usage: dfdiff [-h] --files FILE FILE --pkey PKEY [PKEY ...] [--outcsv] [--outxlsx] [--encoding ENC ENC]
+usage: dfdiff [-h] --files FILE FILE --key KEY [KEY ...] [--outcsv] [--outxlsx] [--encoding ENC ENC]
               [--separators SEP SEP] [--version]
 
-This program load two CSV files as string into Python Pandas DataFrame to identify the differences. Version 0.8.
-Written by Andy Chien andy_chien@hotmail.com -JAJA
+This program load two CSV files as string into Python Pandas DataFrame to identify the differences. Version 0.8. This
+program is released under GPLv3 License. Written by Andy Chien andy_chien@hotmail.com -JAJA
 
 options:
   -h, --help            show this help message and exit
   --files FILE FILE     The path to the left and right csv file
-  --pkey PKEY [PKEY ...]
-                        The list of primary keys to be used for joining the left and right table/csv
+  --key KEY [KEY ...]   The list of join key to be used for joining the left and right table/csv. Composite key is
+                        supported, separated by space and enclosed by double quote if necessary.
   --outcsv              The output of the diff file using CSV file. This output method maybe preferred if the XLSX
                         output experiences performance issues due to the size of the output data.
   --outxlsx             The output of the diff file. This output method is good for Excel-ready analysis, however it
@@ -215,9 +215,9 @@ Due to the nature of the join, there will no reliable method to programmatically
 # About Me
 My name is Hsiang-An (Andy) Chien. Currently, full-time ETL Engineer and Business Intelligence Solution Developer (the title changes so fast these days), part-time general computing and gaming enthusiast.
 
-Would love to see my work being used in more ways than one to tackle common challenges others may have encountered along their way. Share this program and library with others who may need it.
+I would love to hear about my work being used to tackle common challenges others may have encountered along their way. Share this program and library with others who may need it.
 
 If you have success story to tell, it would make my day! Message me at andy_chien (at) hotmail.com.
 
 # Dedication
-I dedicate this work, a piece of me, for the world from my loving family: Jina Chiang, Julia, and Alison Chien. I hope that a piece of me will be around and kicking on the interweb watching over you through time.
+I dedicate this work, a piece of me, for the world and for my loving family: Jina Chiang, Julia, and Alison Chien. I hope that a piece of me will be around and kicking on the interweb watching over you through time.

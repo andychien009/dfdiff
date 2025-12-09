@@ -10,6 +10,8 @@ exclude = [
   "src/run.sh",
   "src/dfdiff.py",
   "src/dfdiff.spec",
+  "src/build/",
+  "src/dist/",
 ]
 
 [project]
